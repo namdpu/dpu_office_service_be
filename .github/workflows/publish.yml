@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - cicd_dev
-  workflow_dispatch:
 
 env:
   APP_NAME: dpu_office_service_be
