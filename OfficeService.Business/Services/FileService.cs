@@ -248,7 +248,7 @@ namespace OfficeService.Business.Services
                     InstanceId = appId.ToString()
                 };
                 if(newConfig.EditorConfig is not null)
-                    newConfig.EditorConfig.CallbackUrl = "http://host.docker.internal:5126/api/file/Callback";
+                    newConfig.EditorConfig.CallbackUrl = _setting.CallbackUrl;
 
                 var accessToken = this.GetAccessToken(newConfig);
                 if(string.IsNullOrEmpty(accessToken))
