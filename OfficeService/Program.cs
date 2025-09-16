@@ -113,6 +113,7 @@ builder.Services.AddTransient<IFileRepository, FileRepository>();
 builder.Services.AddTransient<IFileVersionRepository, FileVersionRepository>();
 
 builder.Services.AddHealthChecks();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
