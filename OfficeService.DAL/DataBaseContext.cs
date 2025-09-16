@@ -24,7 +24,7 @@ namespace OfficeService.DAL
             string connectionString = _configuration.GetConnectionString("postgres");
             //optionsBuilder.UseNpgsql("User ID =admin;Password=admin;Server=localhost;Port=5433;Database=dpu_webgis2");
             //optionsBuilder.UseNpgsql(connectionString);
-            optionsBuilder.UseNpgsql("User ID =admin;Password=admin_password;Server=localhost;Port=5436;Database=dpu_office;Pooling=true;");
+            //optionsBuilder.UseNpgsql("User ID =admin;Password=admin_password;Server=localhost;Port=5436;Database=dpu_office;Pooling=true;");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
