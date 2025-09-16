@@ -75,9 +75,10 @@ namespace OfficeService.Business.Services
                         .Select(x =>
                         {
                             var users = x.Users is not null ? JsonConvert.DeserializeObject<List<string>>(x.Users.RootElement.ToString() ?? "") : new List<string>();
+                            var changes = JsonConvert.DeserializeObject<HistoryDataChanges[]>(x.Histotry?.RootElement.GetProperty("Changes").ToString() ?? "");
                             return new HistoryDTO
                             {
-                                Changes = JsonConvert.DeserializeObject(x.Histotry?.RootElement.GetProperty("Changes").ToString() ?? ""),
+                                Changes = changes?.OrderByDescending(c => c.Created).DistinctBy(c => c.DocumentSha256).ToArray(),
                                 Created = x.LastSave ?? DateTime.UtcNow,
                                 Key = x.Id.ToString(),
                                 ServerVersion = x.Histotry?.RootElement.GetProperty("ServerVersion").ToString() ?? string.Empty,

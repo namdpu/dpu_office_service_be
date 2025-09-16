@@ -16,7 +16,7 @@ namespace OfficeService.DAL.DTOs.Responses
 
     public class HistoryDTO
     {
-        public object? Changes { get; set; }
+        public HistoryDataChanges[]? Changes { get; set; }
         public DateTime Created { get; set; }
         public string Key { get; set; }
         public string ServerVersion { get; set; }
