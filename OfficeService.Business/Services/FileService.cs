@@ -285,7 +285,7 @@ namespace OfficeService.Business.Services
                             if (existFile.FileVersions.Any(x =>
                             {
                                 var changes = JsonConvert.DeserializeObject<HistoryDataChanges[]>(x.Histotry?.RootElement.GetProperty("Changes").ToString() ?? "");
-                                if (changes is not null && data.History.Changes.Length == changes.Length && data.History.Changes.All(c => changes.Any(dc => dc.DocumentSha256 == c.DocumentSha256)))
+                                if (changes is not null && data.History.Changes.Length == changes.Length && data.History.Changes.All(c => changes.Any(dc => dc.DocumentSha256 == c.DocumentSha256 && dc.Created == c.Created)))
                                     return true;
                                 
                                 return false;
@@ -393,7 +393,7 @@ namespace OfficeService.Business.Services
                             if (existFileVer.File.FileVersions.Any(x =>
                             {
                                 var changes = JsonConvert.DeserializeObject<HistoryDataChanges[]>(x.Histotry?.RootElement.GetProperty("Changes").ToString() ?? "");
-                                if (changes is not null && data.History.Changes.Length == changes.Length && data.History.Changes.All(c => changes.Any(dc => dc.DocumentSha256 == c.DocumentSha256)))
+                                if (changes is not null && data.History.Changes.Length == changes.Length && data.History.Changes.All(c => changes.Any(dc => dc.DocumentSha256 == c.DocumentSha256 && dc.Created == c.Created)))
                                     return true;
 
                                 return false;
