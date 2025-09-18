@@ -6,10 +6,10 @@ on:
       - cicd_dev
 
 env:
-  APP_NAME: dpu_office_service_be
-  DOCKER_IMAGE: dpu_office_service_be
-  CONTAINER_NAME: dpu_office_service_be-con
-  IMAGE_NAME: ${{ github.repository_owner }}/dpu_office_service_be
+  APP_NAME: dpu_office_worker_service
+  DOCKER_IMAGE: dpu_office_worker_service
+  CONTAINER_NAME: dpu_office_worker_service-con
+  IMAGE_NAME: ${{ github.repository_owner }}/dpu_office_worker_service
   REGISTRY: ghcr.io
   APP_PORT: 8000
 
@@ -58,8 +58,8 @@ jobs:
           IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           echo "${{ secrets.GIT_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           # Create shared network if not exists
-          docker network create db_postgres_network || true
+          docker network create database_postgres_network || true
           docker pull $IMAGE_NAME
           docker stop ${{ env.CONTAINER_NAME }} || true
           docker rm ${{ env.CONTAINER_NAME }} || true
-          docker run -d --name ${{ env.CONTAINER_NAME }} --network database_postgres_network -v /root/office-service/logs:/app/logs --restart=unless-stopped -p ${{ env.APP_PORT }}:8080 $IMAGE_NAME
+          docker run -d --name ${{ env.CONTAINER_NAME }} --network database_postgres_network -v /root/office-worker-service/logs:/app/logs --restart=unless-stopped -p ${{ env.APP_PORT }}:8081 $IMAGE_NAME
