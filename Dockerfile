@@ -21,8 +21,9 @@ RUN if [ ! -z "$GIT_TOKEN" ] && [ ! -z "$GIT_USER" ]; then \
     --store-password-in-clear-text; \
     fi
 
-# Copy packages and NuGet config
+# Copy packages and log config
 COPY OfficeService/appsettings.Production.json ./OfficeService/
+COPY OfficeService/nlog.config ./OfficeService/
 
 # Restore dependencies
 WORKDIR /src/OfficeService
