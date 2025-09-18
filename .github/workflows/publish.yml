@@ -62,4 +62,4 @@ jobs:
           docker pull $IMAGE_NAME
           docker stop ${{ env.CONTAINER_NAME }} || true
           docker rm ${{ env.CONTAINER_NAME }} || true
-          docker run -d --name ${{ env.CONTAINER_NAME }} --network -v /root/office-service/logs:app/logs database_postgres_network --restart=unless-stopped -p ${{ env.APP_PORT }}:8080 $IMAGE_NAME
+          docker run -d --name ${{ env.CONTAINER_NAME }} --network database_postgres_network -v /root/office-service/logs:app/logs --restart=unless-stopped -p ${{ env.APP_PORT }}:8080 $IMAGE_NAME
