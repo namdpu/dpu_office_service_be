@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NLog;
+using NLog.Web;
 using OfficeService.Business.IServices;
 using OfficeService.Business.Services;
 using OfficeService.DAL;
@@ -17,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 var secretKey = Encoding.ASCII
     .GetBytes(builder.Configuration["AuthSetting:SecretKey"] ?? "DlhXHPrSJgIzqZzhK0nRrVPuOo4nhzVF");
 var authority = builder.Configuration["AuthSetting:Authority"] ?? "https://localhost:7153";
-var appSettings = builder.Configuration.GetSection("appSettings");
+var appSettings = builder.Configuration.GetSection("AppSettings");
 builder.Services.Configure<AppSetting>(appSettings);
 var configAPI = builder.Configuration.GetSection("ConfigAPI");
 builder.Services.Configure<ConfigAPI>(configAPI);
@@ -114,6 +116,12 @@ builder.Services.AddTransient<IFileVersionRepository, FileVersionRepository>();
 
 builder.Services.AddHealthChecks();
 builder.Services.AddMemoryCache();
+
+// add log
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+builder.Logging.ClearProviders();
+builder.Host.UseNLog();
+logger.Info($"Application Starting Up At {DateTime.UtcNow}");
 
 var app = builder.Build();
 

@@ -5,11 +5,6 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using OfficeService.DAL.DTOs.Responses;
 using OfficeService.DAL.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OfficeService.Business.Services
 {
@@ -30,14 +25,14 @@ namespace OfficeService.Business.Services
             _logger = logger;
         }
 
-        public async Task<ApplicationDTO> GetApplication(Guid addId)
+        public async Task<ApplicationDTO> GetApplication(Guid appId)
         {
-            var application = _cache.Get<ApplicationDTO>(addId.ToString());
+            var application = _cache.Get<ApplicationDTO>(appId.ToString());
             if (application is null)
             {
                 HttpClient client = new HttpClient();
                 client.DefaultRequestHeaders.Add(nameof(_appSetting.InternalKey), _appSetting.InternalKey);
-                var response = await client.GetAsync($"{_configAPI.AuthAPI.Endpoint}/{_configAPI.AuthAPI.GetApplication}/{addId}");
+                var response = await client.GetAsync($"{_configAPI.AuthAPI.Endpoint}/{_configAPI.AuthAPI.GetApplication}/{appId}");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -50,7 +45,7 @@ namespace OfficeService.Business.Services
                             application = JsonConvert.DeserializeObject<ApplicationDTO>(result.Data.ToString());
                             if (application is not null)
                             {
-                                _cache.Set(addId.ToString(), application);
+                                _cache.Set(appId.ToString(), application);
                             }
                         }
                     }
@@ -58,7 +53,7 @@ namespace OfficeService.Business.Services
             }
             if (application is null)
             {
-                _logger.LogError($"Can not find application {addId}");
+                _logger.LogError($"Can not find application {appId}");
                 throw new Exception("Error system, please contact administrator");
             }
 

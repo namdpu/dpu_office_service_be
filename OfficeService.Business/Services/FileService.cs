@@ -2,7 +2,6 @@
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -11,9 +10,9 @@ using OfficeService.Business.IServices;
 using OfficeService.Common;
 using OfficeService.DAL.DTOs.Requests;
 using OfficeService.DAL.DTOs.Responses;
+using OfficeService.DAL.Entities;
 using OfficeService.DAL.IRepository;
 using OfficeService.DAL.Models;
-using System;
 using System.Text;
 using System.Text.Json;
 
@@ -145,15 +144,15 @@ namespace OfficeService.Business.Services
         {
             try
             {
-                if(string.IsNullOrEmpty(config.Document.Url))
+                if (string.IsNullOrEmpty(config.Document.Url))
                     return BadRequestResponse("File URL is required!");
 
                 var newConfig = config.Adapt<ConfigDTO>();
-                var existFile = await _rp.FindWithIncludesAsync(x => x.AppId == appId && x.FileKey == config.Document.Key && x.Type == config.Type && x.DocumentType == config.DocumentType, 
+                var existFile = await _rp.FindWithIncludesAsync(x => x.AppId == appId && x.FileKey == config.Document.Key && x.Type == config.Type && x.DocumentType == config.DocumentType,
                     x => x.Include(y => y.FileVersions));
-                if(existFile is null)
+                if (existFile is null)
                 {
-                    if(string.IsNullOrEmpty(config.Document.Url))
+                    if (string.IsNullOrEmpty(config.Document.Url))
                         return BadRequestResponse("File URL is required!");
 
                     string key = GenDocKey(Guid.NewGuid());
@@ -194,16 +193,16 @@ namespace OfficeService.Business.Services
                     existFile.Url = config.Document.Url;
                     existFile.OriginUrl = config.Document.Url;
                     existFile.CallBackUrl = config.EditorConfig?.CallbackUrl;
-                    if(existFile.Status == Enums.DocumentStatus.ReadyForSaving)
+                    if (existFile.Status == Enums.DocumentStatus.ReadyForSaving)
                     {
                         existFile.Key = GenDocKey(existFile.Id);
                         existFile.Status = Enums.DocumentStatus.BeingEdited;
-                    }    
+                    }
                     await _rp.Update(existFile);
                     await _rp.Save();
                     newConfig.Document.Key = existFile.Key;
 
-                    if(string.IsNullOrEmpty(config.Document.Version))
+                    if (string.IsNullOrEmpty(config.Document.Version))
                     {
                         existFile.FileVersions.Add(new DAL.Entities.FileVersion
                         {
@@ -230,16 +229,16 @@ namespace OfficeService.Business.Services
                         }
                         else
                             if (existFile.FileVersions.Max(x => x.SystemVersion) != existFileVer.SystemVersion)
+                        {
+                            if (existFile.Status == Enums.DocumentStatus.ReadyForSaving)
                             {
-                                if (existFile.Status == Enums.DocumentStatus.ReadyForSaving)
-                                {
-                                    existFileVer.Key = GenDocKey(existFileVer.Id);
-                                    existFileVer.Status = Enums.DocumentStatus.BeingEdited;
-                                    await _fileVersionRP.Update(existFileVer);
-                                    await _fileVersionRP.Save();
-                                }
-                                newConfig.Document.Key = existFileVer.Key;
+                                existFileVer.Key = GenDocKey(existFileVer.Id);
+                                existFileVer.Status = Enums.DocumentStatus.BeingEdited;
+                                await _fileVersionRP.Update(existFileVer);
+                                await _fileVersionRP.Save();
                             }
+                            newConfig.Document.Key = existFileVer.Key;
+                        }
                     }
                 }
 
@@ -248,11 +247,11 @@ namespace OfficeService.Business.Services
                     FileKey = config.Document!.Key,
                     InstanceId = appId.ToString()
                 };
-                if(newConfig.EditorConfig is not null)
+                if (newConfig.EditorConfig is not null)
                     newConfig.EditorConfig.CallbackUrl = _setting.CallbackUrl;
 
                 var accessToken = this.GetAccessToken(newConfig);
-                if(string.IsNullOrEmpty(accessToken))
+                if (string.IsNullOrEmpty(accessToken))
                     return BadRequestResponse("Generate token failed!");
 
                 newConfig.Token = accessToken;
@@ -271,27 +270,27 @@ namespace OfficeService.Business.Services
         {
             try
             {
-                if(Constants.StatusSave.Contains(data.Status))
+                if (Constants.StatusSave.Contains(data.Status))
                 {
                     if (string.IsNullOrEmpty(data.Url))
                         throw new Exception("File url is null or empty!");
 
                     var existFile = await _rp.FindWithIncludesAsync(x => x.Key == data.Key, query => query.Include(q => q.FileVersions));
-                    if(existFile is not null)
+                    if (existFile is not null)
                     {
                         // Trường hợp user nhấn nút lưu trên giao diện và tắt tài liệu thì callback vẫn nhận về giá trị changes, cần kiểm tra xem có trùng nhau không để biết không cần lưu
-                        if(data.History?.Changes is not null)
+                        if (data.History?.Changes is not null)
                         {
                             if (existFile.FileVersions.Any(x =>
                             {
                                 var changes = JsonConvert.DeserializeObject<HistoryDataChanges[]>(x.Histotry?.RootElement.GetProperty("Changes").ToString() ?? "");
                                 if (changes is not null && data.History.Changes.Length == changes.Length && data.History.Changes.All(c => changes.Any(dc => dc.DocumentSha256 == c.DocumentSha256 && dc.Created == c.Created)))
                                     return true;
-                                
+
                                 return false;
                             }))
                             {
-                                if(data.Status == Enums.DocumentStatus.ReadyForSaving)
+                                if (data.Status == Enums.DocumentStatus.ReadyForSaving)
                                 {
                                     existFile.Status = Enums.DocumentStatus.ReadyForSaving;
                                     await _rp.UpdateWithoutTracking(existFile);
@@ -349,7 +348,7 @@ namespace OfficeService.Business.Services
                                         if (fileVer is not null)
                                         {
                                             var versionProp = dataObj["version"];
-                                            if(versionProp is not null)
+                                            if (versionProp is not null)
                                             {
                                                 fileVer.Version = versionProp.ToString();
                                                 await _fileVersionRP.UpdateWithoutTracking(fileVer);
@@ -580,7 +579,7 @@ namespace OfficeService.Business.Services
             });
             claims.Add("document", documentJson);
 
-            if(config.EditorConfig is not null)
+            if (config.EditorConfig is not null)
             {
                 var editorConfigJson = JsonConvert.SerializeObject(config.EditorConfig, new JsonSerializerSettings
                 {
@@ -588,7 +587,7 @@ namespace OfficeService.Business.Services
                     ContractResolver = new CamelCasePropertyNamesContractResolver()
                 });
                 claims.Add("editorConfig", editorConfigJson);
-            }    
+            }
 
             var token = _jWTContext.GenerateToken(new RequestToken()
             {
@@ -606,10 +605,10 @@ namespace OfficeService.Business.Services
                 NullValueHandling = NullValueHandling.Ignore,
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
-            foreach(var prop in historyDataDTO.GetType().GetProperties())
+            foreach (var prop in historyDataDTO.GetType().GetProperties())
             {
                 var value = prop.GetValue(historyDataDTO);
-                if(value is not null)
+                if (value is not null)
                     claims.Add(char.ToLowerInvariant(prop.Name[0]) + prop.Name.Substring(1), value.ToString() ?? string.Empty);
             }
 
@@ -671,5 +670,140 @@ namespace OfficeService.Business.Services
                 throw;
             }
         }
+
+        #region Worker handler
+        public async Task HandleSyncData(DateTime? fromDate = default, DateTime? toDate = default)
+        {
+            try
+            {
+                var fileVersUnsync = await _fileVersionRP.Queryable().Include(x => x.File)
+                    .Where(x => x.IsActive && !x.IsDeleted && (!x.SyncedFile || !x.SyncedChanges)
+                        && (!fromDate.HasValue || fromDate.HasValue && fromDate.Value.Date <= x.CreatedDateTime.Date)
+                        && (!toDate.HasValue || toDate.HasValue && toDate.Value.Date >= x.CreatedDateTime.Date)
+                        ).ToListAsync();
+                if (fileVersUnsync is not null && fileVersUnsync.Any())
+                {
+                    var tasks = new List<Task<FileVersion?>>();
+                    var semaphore = new SemaphoreSlim(50);
+                    foreach (var fileVer in fileVersUnsync)
+                    {
+                        var application = await _cachingService.GetApplication(fileVer.File.AppId);
+                        string bucketName = application.BucketName;
+                        if (!fileVer.SyncedFile)
+                            tasks.Add(Task.Run(async () =>
+                            {
+                                await semaphore.WaitAsync();
+                                try
+                                {
+                                    if (!string.IsNullOrEmpty(fileVer.Url))
+                                    {
+                                        Stream? stream = null;
+                                        // lấy file trong server luôn
+                                        if (fileVer.Url.StartsWith(_setting.DocumentServer))
+                                        {
+                                            Uri uri = new Uri(fileVer.Url);
+                                            string absolutePath = uri.AbsolutePath;
+                                            string realPath = String.Join("/", absolutePath.Split("/").SkipLast(1));
+                                            if (System.IO.File.Exists(realPath))
+                                                stream = new FileStream(realPath, FileMode.Open, FileAccess.Read);
+                                        }
+                                        else // tải file về từ url
+                                            stream = await this.DownloadFile(fileVer.Url);
+
+                                        if (stream is not null)
+                                        {
+                                            string prefix = $"/office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
+                                            var res = await _apiStorage.UploadFile(bucketName, prefix, stream, "output.docx");
+                                            if (res is not null)
+                                            {
+                                                fileVer.SyncedFile = true;
+                                                return fileVer;
+                                            }
+                                        }
+                                    }
+                                    return null;
+                                }
+                                finally
+                                {
+                                    semaphore.Release();
+                                }
+                            }));
+                        if (!fileVer.SyncedChanges)
+                        {
+                            tasks.Add(Task.Run(async () =>
+                            {
+                                await semaphore.WaitAsync();
+                                try
+                                {
+                                    if (!string.IsNullOrEmpty(fileVer.ChangesUrl))
+                                    {
+                                        Stream? stream = null;
+                                        // lấy file trong server luôn
+                                        if (fileVer.ChangesUrl.StartsWith(_setting.DocumentServer))
+                                        {
+                                            Uri uri = new Uri(fileVer.ChangesUrl);
+                                            string absolutePath = uri.AbsolutePath;
+                                            string realPath = String.Join("/", absolutePath.Split("/").SkipLast(1));
+                                            if (System.IO.File.Exists(realPath))
+                                                stream = new FileStream(realPath, FileMode.Open, FileAccess.Read);
+                                        }
+                                        else // tải file về từ url
+                                            stream = await this.DownloadFile(fileVer.Url);
+
+                                        if (stream is not null)
+                                        {
+                                            string prefix = $"/office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
+                                            var res = await _apiStorage.UploadFile(bucketName, prefix, stream, "changes.zip");
+                                            if (res is not null)
+                                            {
+                                                fileVer.SyncedChanges = true;
+                                                return fileVer;
+                                            }
+                                        }
+                                    }
+                                    return null;
+                                }
+                                finally
+                                {
+                                    semaphore.Release();
+                                }
+                            }));
+                        }
+                        var results = await Task.WhenAll(tasks);
+                        var successUploads = results.Where(r => r is not null).Select(r => r!).ToList();
+                        if (successUploads.Any())
+                        {
+                            foreach (var item in successUploads)
+                            {
+                                await _fileVersionRP.UpdateWithoutTracking(item);
+                            }
+                        }
+
+                        await _fileVersionRP.Save();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error when handle sync data");
+            }
+        }
+
+        private async Task<Stream?> DownloadFile(string url)
+        {
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+                {
+                    return true;
+                },
+            };
+            var client = new HttpClient(handler);
+            var response = await client.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsStreamAsync();
+            return null;
+        }
+        #endregion
     }
 }

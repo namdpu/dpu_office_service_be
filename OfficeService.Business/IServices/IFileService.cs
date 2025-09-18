@@ -11,5 +11,6 @@ namespace OfficeService.Business.IServices
         Task<BaseResponse> RestoreVersion(string key, string version, string newVersion, string userId, Guid appId);
         Task<BaseResponse> DeleteVersion(string key, string version, Guid appId);
         Task<object> HandleCallback(CallbackHandlerPayload data);
+        Task HandleSyncData(DateTime? fromDate = default, DateTime? toDate = default);
     }
 }
