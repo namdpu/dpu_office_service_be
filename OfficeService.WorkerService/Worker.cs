@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using OfficeService.Business.IServices;
 using OfficeService.DAL.Models;
 
@@ -8,13 +8,13 @@ namespace OfficeService.WorkerService
     {
         private readonly ILogger<Worker> _logger;
         private readonly AppSetting _setting;
-        private readonly IFileService _fileService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public Worker(ILogger<Worker> logger, IOptions<AppSetting> options, IFileService fileService)
+        public Worker(ILogger<Worker> logger, IOptions<AppSetting> options, IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
             _setting = options.Value;
-            _fileService = fileService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -23,7 +23,12 @@ namespace OfficeService.WorkerService
             {
                 try
                 {
-                    await _fileService.HandleSyncData();
+                    using (var scope = _serviceScopeFactory.CreateScope())
+                    {
+                        // Resolve Transient service mỗi lần loop
+                        var _fileService = scope.ServiceProvider.GetRequiredService<IFileService>();
+                        await _fileService.HandleSyncData();
+                    }
                 }
                 catch (Exception ex)
                 {
