@@ -712,12 +712,12 @@ namespace OfficeService.Business.Services
 
                                         if (stream is not null)
                                         {
-                                            string prefix = $"/office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
+                                            string prefix = $"office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
                                             var res = await _apiStorage.UploadFile(bucketName, prefix, stream, "output.docx");
                                             if (res is not null)
                                             {
                                                 fileVer.SyncedFile = true;
-                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/office/{fileVer.File.Id}/v{fileVer.SystemVersion}/output.docx";
+                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/{prefix}/output.docx";
                                                 return fileVer;
                                             }
                                         }
@@ -726,7 +726,7 @@ namespace OfficeService.Business.Services
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, $"Error when sync file {fileVer.Id} to cloud");
+                                    logger.LogError(ex, $"Error when sync file output.docx of ver {fileVer.Id} to cloud");
                                     return null;
                                 }
                                 finally
@@ -758,12 +758,12 @@ namespace OfficeService.Business.Services
 
                                         if (stream is not null)
                                         {
-                                            string prefix = $"/office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
+                                            string prefix = $"office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
                                             var res = await _apiStorage.UploadFile(bucketName, prefix, stream, "changes.zip");
                                             if (res is not null)
                                             {
                                                 fileVer.SyncedChanges = true;
-                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/office/{fileVer.File.Id}/v{fileVer.SystemVersion}/changes.zip";
+                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/{prefix}/changes.zip";
                                                 return fileVer;
                                             }
                                         }
@@ -772,7 +772,7 @@ namespace OfficeService.Business.Services
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, $"Error when sync file {fileVer.Id} to cloud");
+                                    logger.LogError(ex, $"Error when sync file changes.zip of ver {fileVer.Id} to cloud");
                                     return null;
                                 }
                                 finally
