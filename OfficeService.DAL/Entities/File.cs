@@ -29,7 +29,7 @@ namespace OfficeService.DAL.Entities
         [MaxLength(64)]
         [Required]
         public string Key { get; set; }
-        
+
         /// <summary>
         /// File Key
         /// </summary>

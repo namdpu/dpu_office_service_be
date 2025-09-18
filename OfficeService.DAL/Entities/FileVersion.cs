@@ -38,7 +38,7 @@ namespace OfficeService.DAL.Entities
         [DataMember]
         [Column("version")]
         public string? Version { get; set; }
-        
+
         /// <summary>
         /// System version of file
         /// </summary>
@@ -121,6 +121,20 @@ namespace OfficeService.DAL.Entities
         [DataMember]
         [Column("ref_id")]
         public Guid? RefId { get; set; }
+
+        /// <summary>
+        /// Show whether the origin file is already on cloud or not
+        /// </summary>
+        [DataMember]
+        [Column("synced_file")]
+        public bool SyncedFile { get; set; }
+
+        /// <summary>
+        /// Show whether the file changes.zip is already on cloud or not
+        /// </summary>
+        [DataMember]
+        [Column("synced_changes")]
+        public bool SyncedChanges { get; set; }
 
         public virtual Entities.File File { get; set; }
     }
