@@ -118,7 +118,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddMemoryCache();
 
 // add log
-var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 logger.Info($"Application Starting Up At {DateTime.UtcNow}");
