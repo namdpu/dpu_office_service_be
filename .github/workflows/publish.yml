@@ -3,7 +3,7 @@ name: Build and Deploy to VPS
 on:
   push:
     branches:
-      - cicd_dev
+      - cicd_dev-test
 
 env:
   APP_NAME: dpu_office_worker_service
