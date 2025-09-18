@@ -121,7 +121,7 @@ builder.Services.AddMemoryCache();
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
-//logger.Info($"Application Starting Up At {DateTime.UtcNow}");
+logger.Info($"Application Starting Up At {DateTime.UtcNow}");
 
 var app = builder.Build();
 
