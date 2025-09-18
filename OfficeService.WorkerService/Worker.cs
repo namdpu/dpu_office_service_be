@@ -23,12 +23,14 @@ namespace OfficeService.WorkerService
             {
                 try
                 {
+                     _logger.LogInformation("Worker running at: {time}", DateTime.UtcNow);
                     using (var scope = _serviceScopeFactory.CreateScope())
                     {
                         // Resolve Transient service mỗi lần loop
                         var _fileService = scope.ServiceProvider.GetRequiredService<IFileService>();
                         await _fileService.HandleSyncData();
                     }
+                    _logger.LogInformation("Worker finished at: {time}", DateTime.UtcNow);
                 }
                 catch (Exception ex)
                 {
