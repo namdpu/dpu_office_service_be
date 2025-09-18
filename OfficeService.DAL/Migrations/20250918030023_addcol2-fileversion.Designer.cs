@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OfficeService.DAL;
@@ -12,9 +13,11 @@ using OfficeService.DAL;
 namespace OfficeService.DAL.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    partial class DataBaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250918030023_addcol2-fileversion")]
+    partial class addcol2fileversion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -183,13 +186,9 @@ namespace OfficeService.DAL.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
-                    b.Property<bool>("SyncedChanges")
+                    b.Property<bool>("Synced")
                         .HasColumnType("boolean")
-                        .HasColumnName("synced_changes");
-
-                    b.Property<bool>("SyncedFile")
-                        .HasColumnType("boolean")
-                        .HasColumnName("synced_file");
+                        .HasColumnName("synced");
 
                     b.Property<int>("SystemVersion")
                         .HasColumnType("integer")

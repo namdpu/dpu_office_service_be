@@ -1,5 +1,4 @@
 ﻿using OfficeService.DAL.DTOs.Requests;
-using System.Text.Json.Serialization;
 
 namespace OfficeService.DAL.DTOs.Responses
 {

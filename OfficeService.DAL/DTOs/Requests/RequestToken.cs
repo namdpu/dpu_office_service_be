@@ -15,7 +15,7 @@ namespace OfficeService.DAL.DTOs.Requests
         /// <summary>
         /// Defines the document type to be opened (word, cell, slide, pdf, diagram)
         /// </summary>
-         public string DocumentType { get; set; }
+        public string DocumentType { get; set; }
 
         /// <summary>
         /// Defines the platform type used to access the document.
@@ -82,8 +82,8 @@ namespace OfficeService.DAL.DTOs.Requests
         /// <summary>
         /// Defines the name of the document owner/creator.
         /// </summary>
-        public string? OwnerId { get; set; } 
-        
+        public string? OwnerId { get; set; }
+
         /// <summary>
         /// Defines the name of the document owner/creator.
         /// </summary>
@@ -441,7 +441,7 @@ namespace OfficeService.DAL.DTOs.Requests
         /// Defines if the document title is visible on the top toolbar (false) or hidden (true).
         /// </summary>
         public bool? ToolbarHideFileName { get; set; }
-        
+
         /// <summary>
         /// Sets the editor UI theme by ID.
         /// </summary>

@@ -9,7 +9,6 @@ using OfficeService.DAL.DTOs.Requests;
 using OfficeService.DAL.DTOs.Responses;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebGisBE.Controllers
 {

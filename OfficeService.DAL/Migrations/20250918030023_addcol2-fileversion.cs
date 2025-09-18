@@ -5,24 +5,25 @@
 namespace OfficeService.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class addcolfileversion : Migration
+    public partial class addcol2fileversion : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<Guid>(
-                name: "ref_id",
+            migrationBuilder.AddColumn<bool>(
+                name: "synced",
                 schema: "public",
                 table: "file_version",
-                type: "uuid",
-                nullable: true);
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ref_id",
+                name: "synced",
                 schema: "public",
                 table: "file_version");
         }

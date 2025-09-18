@@ -27,7 +27,7 @@ namespace OfficeService.Business.Services
             List<Claim> tokenClaims = new List<Claim>();
             foreach (var item in claims)
             {
-                if(IsValidJson(item.Value))
+                if (IsValidJson(item.Value))
                     tokenClaims.Add(new Claim(item.Key, item.Value, JsonClaimValueTypes.Json));
                 else
                     tokenClaims.Add(new Claim(item.Key, item.Value));
