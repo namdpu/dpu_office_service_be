@@ -128,6 +128,16 @@ namespace WebGisBE.Controllers
             }
         }
 
+        [SwaggerOperation("TestLog")]
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestLog(string? log)
+        {
+            _logger.LogInformation("Test log: {log}", log);
+
+            return Ok("");
+        }
+
         public record RestoreVersionReq(string key, string version, string newVersion, string userId);
     }
 }
