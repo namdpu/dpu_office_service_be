@@ -15,6 +15,8 @@ var builder = Host.CreateApplicationBuilder(args);
 
 var appSettings = builder.Configuration.GetSection("AppSettings");
 builder.Services.Configure<AppSetting>(appSettings);
+var configAPI = builder.Configuration.GetSection("ConfigAPI");
+builder.Services.Configure<ConfigAPI>(configAPI);
 var config = new Config();
 builder.Configuration.GetSection("Config").Bind(config);
 if (config is not null)

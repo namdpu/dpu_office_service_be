@@ -724,6 +724,11 @@ namespace OfficeService.Business.Services
                                     }
                                     return null;
                                 }
+                                catch (Exception ex)
+                                {
+                                    logger.LogError(ex, $"Error when sync file {fileVer.Id} to cloud");
+                                    return null;
+                                }
                                 finally
                                 {
                                     semaphore.Release();
@@ -763,6 +768,11 @@ namespace OfficeService.Business.Services
                                             }
                                         }
                                     }
+                                    return null;
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogError(ex, $"Error when sync file {fileVer.Id} to cloud");
                                     return null;
                                 }
                                 finally
