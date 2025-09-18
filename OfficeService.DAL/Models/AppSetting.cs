@@ -7,5 +7,6 @@
         public string InternalKey { get; set; }
         public string CallbackUrl { get; set; }
         public int JobInterval { get; set; }
+        public string CloudServer { get; set; }
     }
 }
