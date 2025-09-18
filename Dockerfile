@@ -29,7 +29,10 @@ WORKDIR /src/OfficeService
 RUN dotnet restore OfficeService.csproj
 
 # Copy full source and build
-COPY . .
+COPY OfficeService/ ./OfficeService/
+COPY OfficeService.Business/ ./OfficeService.Business/
+COPY OfficeService.Common/ ./OfficeService.Common/
+COPY OfficeService.DAL/ ./OfficeService.DAL/
 
 # Publish the main service project
 RUN dotnet publish OfficeService.csproj -c Release -o /app/publish /p:UseAppHost=false
