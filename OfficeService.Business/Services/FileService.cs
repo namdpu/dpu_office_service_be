@@ -717,6 +717,7 @@ namespace OfficeService.Business.Services
                                             if (res is not null)
                                             {
                                                 fileVer.SyncedFile = true;
+                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/office/{fileVer.File.Id}/v{fileVer.SystemVersion}/output.docx";
                                                 return fileVer;
                                             }
                                         }
@@ -757,6 +758,7 @@ namespace OfficeService.Business.Services
                                             if (res is not null)
                                             {
                                                 fileVer.SyncedChanges = true;
+                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/office/{fileVer.File.Id}/v{fileVer.SystemVersion}/changes.zip";
                                                 return fileVer;
                                             }
                                         }
