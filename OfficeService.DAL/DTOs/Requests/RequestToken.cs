@@ -51,7 +51,7 @@ namespace OfficeService.DAL.DTOs.Requests
         /// <summary>
         /// Defines the desired file name for the viewed or edited document which will also be used as file name when the document is downloaded. The length is limited to 128 symbols.
         /// </summary>
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         /// <summary>
         /// Defines the absolute URL where the source viewed or edited document is stored. Be sure to add a token when using local links.
@@ -461,6 +461,12 @@ namespace OfficeService.DAL.DTOs.Requests
         /// Document zoom percentage; -1 (fit to page), -2 (fit width).
         /// </summary>
         public int? Zoom { get; set; }
+
+        /// <summary>
+        /// White-label: hide/show specific toolbar buttons and tabs.
+        /// Example: new ToolbarLayout { Protect = false, Chat = false }
+        /// </summary>
+        public Layout? Layout { get; set; }
     }
 
     /// <summary>
@@ -721,5 +727,66 @@ namespace OfficeService.DAL.DTOs.Requests
         /// The absolute URL to the document where it will be created and available after creation.
         /// </summary>
         public string? Url { get; set; }
+    }
+
+    /// <summary>
+    /// White-label toolbar layout options.
+    /// </summary>
+    public class Layout
+    {
+        public Layout()
+        {
+            Toolbar = new ToolbarLayout();
+        }
+        public ToolbarLayout Toolbar { get; set; }
+    }
+
+    /// <summary>
+    /// White-label toolbar layout options.
+    /// </summary>
+    public class ToolbarLayout
+    {
+        public bool? File { get; set; }
+        public bool? Edit { get; set; }
+        public bool? View { get; set; }
+        public bool? Insert { get; set; }
+        public bool? Layout { get; set; }
+        public bool? References { get; set; }
+        public bool? Collaboration { get; set; }
+        public bool? Protect { get; set; }   // 👈 Ẩn tab Protection
+        public bool? Plugins { get; set; }
+        public bool? Chat { get; set; }
+        public bool? Comments { get; set; }
+    }
+
+    /// <summary>
+    /// White-label left menu layout.
+    /// </summary>
+    public class LeftMenuLayout
+    {
+        public bool? Plugins { get; set; }
+        public bool? Comments { get; set; }
+        public bool? Chat { get; set; }
+    }
+
+    /// <summary>
+    /// White-label right menu layout.
+    /// </summary>
+    public class RightMenuLayout
+    {
+        public bool? Plugins { get; set; }
+        public bool? Comments { get; set; }
+        public bool? Chat { get; set; }
+    }
+
+    /// <summary>
+    /// White-label status bar layout.
+    /// </summary>
+    public class StatusBarLayout
+    {
+        public bool? Zoom { get; set; }
+        public bool? Language { get; set; }
+        public bool? Spellcheck { get; set; }
+        public bool? DocumentInfo { get; set; }
     }
 }

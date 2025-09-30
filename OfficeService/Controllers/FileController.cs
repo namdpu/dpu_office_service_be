@@ -8,6 +8,8 @@ using OfficeService.Controllers;
 using OfficeService.DAL.DTOs.Requests;
 using OfficeService.DAL.DTOs.Responses;
 using Swashbuckle.AspNetCore.Annotations;
+using System.IO;
+using System.Net.Http;
 using System.Security.Claims;
 
 namespace WebGisBE.Controllers
@@ -101,6 +103,48 @@ namespace WebGisBE.Controllers
             return await _fileService.DeleteVersion(key, version, Guid.Parse(appId));
         }
 
+        [SwaggerOperation("Restore version")]
+        [HttpPost]
+        public async Task<BaseResponse> SaveAs(SaveAsRequest request)
+        {
+            var appId = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(appId))
+            {
+                return new BaseResponse
+                {
+                    StatusCode = 404,
+                    Message = Constants.DATA_NULL
+                };
+            }
+            return await _fileService.SaveAs(request, Guid.Parse(appId));
+        }
+
+        [SwaggerOperation("FillDataToFile")]
+        [HttpPost]
+        public async Task<IActionResult> FillDataToFile([FromForm] FillDataToFileReq request)
+        {
+            var appId = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(appId))
+            {
+                return Unauthorized();
+            }
+            var data = await _fileService.FillDataToFile(request, Guid.Parse(appId));
+            if(data.StatusCode == 200 && data.Data != null)
+            {
+                var stream = await DownloadFile(data.Data.ToString() ?? "");
+                if (stream == null)
+                {
+                    return NotFound(new { error = "File not found" });
+                }
+
+                string outputType = Constants.GetFileType(request.OutputFile);
+
+                return File(stream, "application/octet-stream", $"filled-data.{outputType}");
+            }
+
+            return Ok(data);
+        }
+
         [SwaggerOperation("Callback")]
         [HttpPost]
         // NEED TO IMPLEMENT: Token for outbox
@@ -136,6 +180,30 @@ namespace WebGisBE.Controllers
             _logger.LogInformation("Test log: {log}", log);
 
             return Ok("");
+        }
+
+        private async Task<Stream?> DownloadFile(string url)
+        {
+            try
+            {
+                using var client = new  HttpClient();
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var stream = await response.Content.ReadAsStreamAsync();
+                    return stream;
+                }
+                else
+                {
+                    System.Console.WriteLine($"Error downloading file: {response.StatusCode}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Error downloading file: {ex.Message}");
+                return null;
+            }
         }
 
         public record RestoreVersionReq(string key, string version, string newVersion, string userId);

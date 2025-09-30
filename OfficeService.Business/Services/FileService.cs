@@ -2,9 +2,11 @@
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using OfficeService.Business.IServices;
 using OfficeService.Common;
@@ -13,8 +15,10 @@ using OfficeService.DAL.DTOs.Responses;
 using OfficeService.DAL.Entities;
 using OfficeService.DAL.IRepository;
 using OfficeService.DAL.Models;
+using System;
 using System.Text;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace OfficeService.Business.Services
 {
@@ -28,6 +32,7 @@ namespace OfficeService.Business.Services
         private readonly AppSetting _setting;
         private static readonly object _customHeaderLock = new object();
         private readonly CachingService _cachingService;
+        private readonly ConfigAPI _configAPI;
         public FileService(
             IFileRepository rp,
             IJWTContext jWTContext,
@@ -36,7 +41,8 @@ namespace OfficeService.Business.Services
             IFileVersionRepository fileVersionRP,
             IApiStorage apiStorage,
             IOptions<AppSetting> options,
-            CachingService cachingService) : base(rp, logger)
+            CachingService cachingService,
+            IOptions<ConfigAPI> options1) : base(rp, logger)
         {
             this._rp = rp;
             _jWTContext = jWTContext;
@@ -53,6 +59,7 @@ namespace OfficeService.Business.Services
                     }
                 }
             _cachingService = cachingService;
+            _configAPI = options1.Value;
         }
 
         public async Task<BaseResponse> GetVersionHistory(string key, Guid appId)
@@ -97,6 +104,7 @@ namespace OfficeService.Business.Services
             }
         }
 
+        // check logic when + order by + first
         public async Task<BaseResponse> GetHistoryData(Config config, Guid appId)
         {
             try
@@ -144,6 +152,10 @@ namespace OfficeService.Business.Services
         {
             try
             {
+                int currentConnections = await this.CurrentConnections();
+                if (currentConnections > _setting.MaxConnection)
+                    return BadRequestResponse("The document server is busy, please try again later!");
+
                 if (string.IsNullOrEmpty(config.Document.Url))
                     return BadRequestResponse("File URL is required!");
 
@@ -255,6 +267,19 @@ namespace OfficeService.Business.Services
                     return BadRequestResponse("Generate token failed!");
 
                 newConfig.Token = accessToken;
+
+                // Default setting
+                if(newConfig.EditorConfig is null)
+                    newConfig.EditorConfig = new EditorConfig();
+                if(newConfig.EditorConfig.Customization is null)
+                    newConfig.EditorConfig.Customization = new Customization();
+                newConfig.EditorConfig.Customization.ToolbarHideFileName = true;
+                newConfig.Document.Title = " ";
+                //newConfig.EditorConfig.Customization.Plugins = false;
+                //if(newConfig.EditorConfig.Customization.Layout is null)
+                //    newConfig.EditorConfig.Customization.Layout = new Layout();
+                //newConfig.EditorConfig.Customization.Layout.Toolbar.Protect = false;
+                //newConfig.EditorConfig.Customization.Layout.Toolbar.Plugins = false;
 
                 return SuccessResponse(newConfig, "Get token view file successfully!");
             }
@@ -712,12 +737,12 @@ namespace OfficeService.Business.Services
 
                                         if (stream is not null)
                                         {
-                                            string prefix = $"/office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
+                                            string prefix = $"office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
                                             var res = await _apiStorage.UploadFile(bucketName, prefix, stream, "output.docx");
                                             if (res is not null)
                                             {
                                                 fileVer.SyncedFile = true;
-                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/office/{fileVer.File.Id}/v{fileVer.SystemVersion}/output.docx";
+                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/{prefix}/output.docx";
                                                 return fileVer;
                                             }
                                         }
@@ -726,7 +751,7 @@ namespace OfficeService.Business.Services
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, $"Error when sync file {fileVer.Id} to cloud");
+                                    logger.LogError(ex, $"Error when sync file output.docx of ver {fileVer.Id} to cloud");
                                     return null;
                                 }
                                 finally
@@ -758,12 +783,12 @@ namespace OfficeService.Business.Services
 
                                         if (stream is not null)
                                         {
-                                            string prefix = $"/office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
+                                            string prefix = $"office/{fileVer.File.Id}/v{fileVer.SystemVersion}";
                                             var res = await _apiStorage.UploadFile(bucketName, prefix, stream, "changes.zip");
                                             if (res is not null)
                                             {
                                                 fileVer.SyncedChanges = true;
-                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/office/{fileVer.File.Id}/v{fileVer.SystemVersion}/changes.zip";
+                                                fileVer.Url = $"{_setting.CloudServer}/{bucketName}/{prefix}/changes.zip";
                                                 return fileVer;
                                             }
                                         }
@@ -772,7 +797,7 @@ namespace OfficeService.Business.Services
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, $"Error when sync file {fileVer.Id} to cloud");
+                                    logger.LogError(ex, $"Error when sync file changes.zip of ver {fileVer.Id} to cloud");
                                     return null;
                                 }
                                 finally
@@ -817,5 +842,181 @@ namespace OfficeService.Business.Services
             return null;
         }
         #endregion
+
+        public async Task<BaseResponse> SaveAs(SaveAsRequest request, Guid appId)
+        {
+            try
+            {
+                if(request.FileType == request.OutputType)
+                    return BadRequestResponse("File type and output type must be different!");
+                if(!Constants.fileTypes.Contains(request.FileType) || !Constants.fileTypes.Contains(request.OutputType))
+                    return BadRequestResponse("File type or output type is not supported!");
+                if(string.IsNullOrEmpty(request.Url))
+                {
+                    if(string.IsNullOrEmpty(request.Key))
+                        return BadRequestResponse("Key and version are required when URL is null or empty!");
+
+                    var existFile = await _rp.FindWithIncludesAsync(x => x.AppId == appId && x.FileKey == request.Key, x => x.Include(y => y.FileVersions));
+                    if (existFile is null)
+                        return NotFoundResponse("File not found or not exist!");
+
+                    var existFileVer = existFile.FileVersions
+                        .Where(x => x.IsActive && !x.IsDeleted && string.IsNullOrEmpty(request.Version) || request.Version == x.Version)
+                        .OrderByDescending(x => x.SystemVersion)
+                        .FirstOrDefault();
+                    if (existFileVer is null)
+                        return NotFoundResponse("File version not found or not exist!");
+                    request.Url = existFileVer.Url;
+                }
+
+                var config = new
+                {
+                    async = true,
+                    filetype = request.FileType,
+                    key = "random-unique-key-12345",
+                    outputtype = request.OutputType,
+                    title = request.Title ?? "data." + request.OutputType,
+                    url = request.Url
+                };
+
+                Dictionary<string, string> claims = new();
+                claims.Add("async", config.async.ToString().ToLower());
+                claims.Add("filetype", config.filetype);
+                claims.Add("key", config.key);
+                claims.Add("outputtype", config.outputtype);
+                claims.Add("title", config.title);
+                claims.Add("url", config.url);
+
+                var token = _jWTContext.GenerateToken(new RequestToken()
+                {
+                    ExpiresIn = 84600 // 24 hours
+                }, claims);
+
+                var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token?.AccessToken);
+                StringContent stringContent = new StringContent(JsonConvert.SerializeObject(config), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync($"{_configAPI.DocumentServerAPI.Endpoint}/{_configAPI.DocumentServerAPI.ConvertService}", stringContent);
+                string content = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = XDocument.Parse(content);
+
+                    string? fileUrl = data?.Root?.Element("FileUrl")?.Value;
+                    if (!string.IsNullOrEmpty(fileUrl))
+                    {
+                        return SuccessResponse(fileUrl, "Save as successfully!");
+                    }
+                    else
+                        return BadRequestResponse("Can not get file URL after convert!");
+                }
+
+                return DefineResponse((int)response.StatusCode, content, null);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error when save as file {request.Key ?? request.Url} in app {appId}");
+
+                return CatchErrorResponse(ex);
+            }
+        }
+
+        public async Task<BaseResponse> FillDataToFile(FillDataToFileReq request, Guid appId)
+        {
+            try
+            {
+                if(string.IsNullOrEmpty(request.Url))
+                {
+                   return BadRequestResponse("URL is required!");
+                }
+                string fileType = Constants.GetFileExtensionFromUrl(request.Url);
+                if(string.IsNullOrEmpty(fileType) || !Constants.fileTypes.Contains(fileType))
+                {
+                    fileType = Constants.GetFileType(request.InputFile);
+                    if(string.IsNullOrEmpty(fileType) || !Constants.fileTypes.Contains(fileType))
+                        return BadRequestResponse("File type is not supported!");
+                }    
+                string outputType = Constants.GetFileType(request.OutputFile);
+                if(string.IsNullOrEmpty(outputType) || !Constants.fileTypes.Contains(outputType))
+                    return BadRequestResponse("Output file type is not supported!");
+
+                var argumentObj = new
+                {
+                    fileUrl = request.Url,
+                    outputType = outputType,
+                    keyPairValue = JsonConvert.DeserializeObject(request.Data)
+                };
+                var argumentJson = JsonConvert.SerializeObject(argumentObj, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                });
+
+                Dictionary<string, string> claims = new();
+                claims.Add("key", $"filldata-{Guid.NewGuid()}");
+                claims.Add("url", _setting.DocbuildFillData);
+                claims.Add("argument", argumentJson);
+
+                var token = _jWTContext.GenerateToken(new RequestToken()
+                {
+                    ExpiresIn = 84600 // 24 hours
+                }, claims);
+                if (token is null || string.IsNullOrEmpty(token.AccessToken))
+                    return BadRequestResponse("Generate token failed!");
+
+                var client = new HttpClient();
+                StringContent stringContent = new StringContent(JsonConvert.SerializeObject(new
+                {
+                    token = token.AccessToken
+                }), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync($"{_configAPI.DocumentServerAPI.Endpoint}/{_configAPI.DocumentServerAPI.DocBuilder}", stringContent);
+                string content = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    var dataObj = JsonConvert.DeserializeObject<JObject>(content);
+                    if (dataObj is not null)
+                    {
+                        var urlFile = dataObj["urls"]?[$"FilledData.{outputType}"];
+                        if (urlFile is not null)
+                            return SuccessResponse(urlFile, "Fill data to file key successfully");
+                    }
+                        return BadRequestResponse("Can not get file URL after convert!");
+                }
+
+                return DefineResponse((int)response.StatusCode, content, null);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error when filldata to file {request.Url}");
+
+                return CatchErrorResponse(ex);
+            }
+        }
+
+        private async Task<int> CurrentConnections()
+        {
+            try
+            {
+                var client = new HttpClient();
+                var response = await client.GetAsync($"{_configAPI.DocumentServerAPI.Endpoint}/{_configAPI.DocumentServerAPI.Info}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var dataObj = JsonConvert.DeserializeObject<JObject>(json);
+                    if (dataObj is not null)
+                    {
+                        var connections = dataObj["quota"]?["edit"]?["connectionsCount"];
+                        int currentConnections = 0;
+                        if (connections is not null && int.TryParse(connections.ToString(), out currentConnections))
+                            return currentConnections;
+                    }
+                }
+                throw new Exception("Get current connections failed!");
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
     }
 }

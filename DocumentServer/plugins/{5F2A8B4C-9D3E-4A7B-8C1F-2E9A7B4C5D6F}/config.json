@@ -1,0 +1,87 @@
+{
+  "name": "Add key plugin",
+  "guid": "asc.{5F2A8B4C-9D3E-4A7B-8C1F-2E9A7B4C5D6F}",
+  "variations": [
+    {
+      "description": "add key plugin",
+      "url": "index.html",
+      "icons": [
+        "resources/light/icon.png",
+        "resources/light/icon@2x.png"
+      ],
+      "icons2": [
+        {
+          "style": "light",
+          "100%": {
+            "normal": "resources/light/icon.png"
+          },
+          "125%": {
+            "normal": "resources/light/icon@1.25x.png"
+          },
+          "150%": {
+            "normal": "resources/light/icon@1.5x.png"
+          },
+          "175%": {
+            "normal": "resources/light/icon@1.75x.png"
+          },
+          "200%": {
+            "normal": "resources/light/icon@2x.png"
+          }
+        },
+        {
+          "style": "dark",
+          "100%": {
+            "normal": "resources/dark/icon.png"
+          },
+          "125%": {
+            "normal": "resources/dark/icon@1.25x.png"
+          },
+          "150%": {
+            "normal": "resources/dark/icon@1.5x.png"
+          },
+          "175%": {
+            "normal": "resources/dark/icon@1.75x.png"
+          },
+          "200%": {
+            "normal": "resources/dark/icon@2x.png"
+          }
+        }
+      ],
+      "isViewer": false,
+      "isDisplayedInViewer": false,
+      "EditorsSupport": [
+        "word",
+        "cell",
+        "slide"
+      ],
+      "isVisual": true,
+      "isModal": true,
+      "isInsideMode": false,
+      "initDataType": "none",
+      "initData": "",
+      "isUpdateOleOnResize": false,
+      "type": "panel",
+      "size": [
+        400,
+        350
+      ],
+      "buttons": [
+        {
+          "text": "Insert",
+          "primary": true,
+          "isViewer": false
+        },
+        {
+          "text": "Cancel",
+          "primary": false,
+          "isViewer": true
+        }
+      ],
+      "events": [
+        "onContextMenuShow",
+        "onTargetPositionChanged",
+        "onContextMenuClick"
+      ]
+    }
+  ]
+}

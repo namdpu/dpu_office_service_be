@@ -12,5 +12,7 @@ namespace OfficeService.Business.IServices
         Task<BaseResponse> DeleteVersion(string key, string version, Guid appId);
         Task<object> HandleCallback(CallbackHandlerPayload data);
         Task HandleSyncData(DateTime? fromDate = default, DateTime? toDate = default);
+        Task<BaseResponse> SaveAs(SaveAsRequest request, Guid appId);
+        Task<BaseResponse> FillDataToFile(FillDataToFileReq request, Guid appId);
     }
 }
