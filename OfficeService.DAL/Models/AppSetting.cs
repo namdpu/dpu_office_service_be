@@ -8,5 +8,7 @@
         public string CallbackUrl { get; set; }
         public int JobInterval { get; set; }
         public string CloudServer { get; set; }
+        public int MaxConnection { get; set; }
+        public string DocbuildFillData { get; set; }
     }
 }
