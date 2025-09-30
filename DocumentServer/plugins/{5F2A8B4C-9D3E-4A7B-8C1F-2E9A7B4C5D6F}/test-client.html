@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Client Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .message-log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            margin: 10px 0;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007acc;
+            background-color: white;
+        }
+        .message.received {
+            border-left-color: #28a745;
+        }
+        .message.sent {
+            border-left-color: #007acc;
+        }
+        .message.error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .primary { background-color: #007acc; color: white; }
+        .success { background-color: #28a745; color: white; }
+        .secondary { background-color: #6c757d; color: white; }
+        .controls {
+            margin: 20px 0;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plugin Client Test - Add Key Plugin</h1>
+        
+        <div class="controls">
+            <button class="primary" onclick="sendTestData()">Send Test Data</button>
+            <button class="success" onclick="requestAllKeys()">Request All Keys</button>
+            <button class="secondary" onclick="pingPlugin()">Ping Plugin</button>
+            <button class="secondary" onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="message-log" id="messageLog">
+            <div class="message">Ready to communicate with plugin...</div>
+        </div>
+
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Open ONLYOFFICE Document Editor</li>
+            <li>Open this HTML file in a new tab/window</li>
+            <li>Load the Add Key plugin in ONLYOFFICE</li>
+            <li>Use the buttons above to test communication</li>
+            <li>Try saving a document in ONLYOFFICE to trigger the save event</li>
+        </ol>
+    </div>
+
+    <script>
+        // Sample test data
+        const testData = [
+            {
+                key: "CUSTOMER_NAME",
+                type: 0,
+                dataInsertType: 0,
+                description: "Customer full name"
+            },
+            {
+                key: "ORDER_DATE",
+                type: 0,
+                dataInsertType: 0,
+                description: "Order date"
+            },
+            {
+                key: "INVOICE_TABLE",
+                type: 2,
+                dataInsertType: 0,
+                description: "Invoice items table"
+            },
+            {
+                key: "COMPANY_LOGO",
+                type: 0,
+                dataInsertType: 1,
+                description: "Company logo image"
+            }
+        ];
+
+        // Listen for messages from plugin
+        window.addEventListener('message', function(event) {
+            logMessage('Received', event.data, 'received');
+        });
+
+        // Generate unique messageId
+        function generateMessageId() {
+            return Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function sendTestData() {
+            const messageId = generateMessageId();
+            const message = {
+                type: 'SET_TEXT_DATA',
+                messageId: messageId,
+                payload: testData
+            };
+            
+            // Try to send to all possible plugin windows
+            window.postMessage(message, '*');
+            
+            // Also try to find and send to iframe if exists
+            const iframes = document.getElementsByTagName('iframe');
+            for (let i = 0; i < iframes.length; i++) {
+                try {
+                    iframes[i].contentWindow.postMessage(message, '*');
+                } catch (e) {
+                    console.log('Could not send to iframe:', e);
+                }
+            }
+            
+            logMessage('Sent', message, 'sent');
+        }
+
+        function requestAllKeys() {
+            const messageId = generateMessageId();
+            const message = {
+                type: 'GET_ALL_KEYS',
+                messageId: messageId,
+                payload: {}
+            };
+            
+            window.postMessage(message, '*');
+            
+            // Also try to send to iframes
+            const iframes = document.getElementsByTagName('iframe');
+            for (let i = 0; i < iframes.length; i++) {
+                try {
+                    iframes[i].contentWindow.postMessage(message, '*');
+                } catch (e) {
+                    console.log('Could not send to iframe:', e);
+                }
+            }
+            
+            logMessage('Sent', message, 'sent');
+        }
+
+        function pingPlugin() {
+            const messageId = generateMessageId();
+            const message = {
+                type: 'PING',
+                messageId: messageId,
+                payload: {}
+            };
+            
+            window.postMessage(message, '*');
+            
+            // Also try to send to iframes
+            const iframes = document.getElementsByTagName('iframe');
+            for (let i = 0; i < iframes.length; i++) {
+                try {
+                    iframes[i].contentWindow.postMessage(message, '*');
+                } catch (e) {
+                    console.log('Could not send to iframe:', e);
+                }
+            }
+            
+            logMessage('Sent', message, 'sent');
+        }
+
+        function logMessage(direction, data, className = '') {
+            const log = document.getElementById('messageLog');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const messageId = data.messageId ? ` (ID: ${data.messageId})` : '';
+            const content = `
+                <div><strong>${direction}:</strong> ${data.type || 'Unknown'}${messageId}</div>
+                <div class="timestamp">${timestamp}</div>
+                <div><pre>${JSON.stringify(data, null, 2)}</pre></div>
+            `;
+            
+            messageDiv.innerHTML = content;
+            log.appendChild(messageDiv);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            const log = document.getElementById('messageLog');
+            log.innerHTML = '<div class="message">Log cleared...</div>';
+        }
+
+        // Log when page loads
+        logMessage('System', { message: 'Client ready to communicate with plugin' }, 'received');
+    </script>
+</body>
+</html>
