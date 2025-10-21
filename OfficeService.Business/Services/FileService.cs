@@ -261,25 +261,22 @@ namespace OfficeService.Business.Services
                 };
                 if (newConfig.EditorConfig is not null)
                     newConfig.EditorConfig.CallbackUrl = _setting.CallbackUrl;
+                // Default setting
+                if (newConfig.EditorConfig is null)
+                    newConfig.EditorConfig = new EditorConfig();
+                if (newConfig.EditorConfig.Customization is null)
+                    newConfig.EditorConfig.Customization = new Customization();
+                newConfig.EditorConfig.Customization.ToolbarHideFileName = true;
+                newConfig.Document.Title = " ";
+                if (newConfig.Document.Permissions is null)
+                    newConfig.Document.Permissions = new Permissions();
+                newConfig.Document.Permissions.Protect = false;
 
                 var accessToken = this.GetAccessToken(newConfig);
                 if (string.IsNullOrEmpty(accessToken))
                     return BadRequestResponse("Generate token failed!");
 
                 newConfig.Token = accessToken;
-
-                // Default setting
-                if(newConfig.EditorConfig is null)
-                    newConfig.EditorConfig = new EditorConfig();
-                if(newConfig.EditorConfig.Customization is null)
-                    newConfig.EditorConfig.Customization = new Customization();
-                newConfig.EditorConfig.Customization.ToolbarHideFileName = true;
-                newConfig.Document.Title = " ";
-                //newConfig.EditorConfig.Customization.Plugins = false;
-                //if(newConfig.EditorConfig.Customization.Layout is null)
-                //    newConfig.EditorConfig.Customization.Layout = new Layout();
-                //newConfig.EditorConfig.Customization.Layout.Toolbar.Protect = false;
-                //newConfig.EditorConfig.Customization.Layout.Toolbar.Plugins = false;
 
                 return SuccessResponse(newConfig, "Get token view file successfully!");
             }
